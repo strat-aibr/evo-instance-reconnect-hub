@@ -46,6 +46,15 @@ npm run dev
 
 5. Ensure HTTPS is enabled for production security.
 
+### Troubleshooting Docker Rate Limits
+
+If you encounter Docker pull rate limit errors during deployment:
+
+1. Consider authenticating with Docker Hub in Easypanel settings
+2. Reduce the number of container builds/deployments in a short period
+3. Use specific image tags to minimize pull requests
+4. Wait a few hours and try again if rate limits have been exceeded
+
 ### Manual Deployment
 
 1. Clone this repository to your server.

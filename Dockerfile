@@ -1,5 +1,6 @@
 
-FROM node:18-alpine
+# Use a specific tag for stability and fewer pulls
+FROM node:18.19-alpine3.19
 
 WORKDIR /app
 
