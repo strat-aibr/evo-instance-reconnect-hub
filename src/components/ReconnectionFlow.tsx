@@ -4,6 +4,7 @@ import { checkConnectionState, connectInstance, ConnectInstanceResponse } from '
 import StatusMessage from './StatusMessage';
 import QRCode from './QRCode';
 import { Card, CardContent } from '@/components/ui/card';
+import { toast } from '@/components/ui/sonner';
 
 interface ReconnectionFlowProps {
   instance: string;
@@ -15,6 +16,7 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
   const [status, setStatus] = useState<ConnectionStatus>('checking');
   const [qrCodeData, setQrCodeData] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [lastCheckTime, setLastCheckTime] = useState<Date>(new Date());
   
   const generateQrCode = useCallback(async () => {
     try {
@@ -35,18 +37,28 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
   
   const checkConnection = useCallback(async () => {
     try {
-      setStatus('checking');
+      if (status !== 'connected') {
+        setStatus('checking');
+      }
       
       // Step 1: Check connection state
       const stateData = await checkConnectionState(instance);
+      setLastCheckTime(new Date());
       
       if (stateData.state === 'open') {
+        if (status !== 'connected') {
+          setStatus('connected');
+          toast.success("Instância conectada com sucesso!");
+          return true;
+        }
         setStatus('connected');
         return true;
       }
       
-      // Step 2: If not connected, generate QR code
-      await generateQrCode();
+      // Step 2: If not connected and we were previously in checking status, generate QR code
+      if (status === 'checking') {
+        await generateQrCode();
+      }
       return false;
       
     } catch (error) {
@@ -55,11 +67,21 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
       setErrorMessage(error instanceof Error ? error.message : "Erro desconhecido na conexão");
       return false;
     }
-  }, [instance, generateQrCode]);
+  }, [instance, generateQrCode, status]);
   
   // Initial check on component mount
   useEffect(() => {
     checkConnection();
+  }, [checkConnection]);
+  
+  // Poll connection status every 5 seconds
+  useEffect(() => {
+    const pollingId = setInterval(() => {
+      console.log('Polling connection status...');
+      checkConnection();
+    }, 5000); // 5 seconds
+    
+    return () => clearInterval(pollingId);
   }, [checkConnection]);
   
   // Auto refresh QR code every 30 seconds if in reconnecting state
@@ -100,6 +122,10 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
                />;
     }
   };
+
+  const formatLastCheckTime = (date: Date) => {
+    return date.toLocaleTimeString();
+  };
   
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -107,6 +133,9 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
         <div className="text-center mb-6">
           <h2 className="text-2xl font-semibold mb-2">Reconexão de Instância</h2>
           <p className="text-gray-600">Instância: {instance}</p>
+          <p className="text-xs text-gray-400 mt-1">
+            Última verificação: {formatLastCheckTime(lastCheckTime)}
+          </p>
         </div>
         
         {renderStatusMessage()}
@@ -114,6 +143,22 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
         {status === 'reconnecting' && qrCodeData && (
           <div className="mt-6">
             <QRCode qrData={qrCodeData} onRefresh={handleRefreshClick} />
+          </div>
+        )}
+
+        {status === 'connected' && (
+          <div className="mt-6 flex flex-col items-center">
+            <div className="animate-pulse bg-green-100 text-green-800 p-4 rounded-full w-16 h-16 flex items-center justify-center mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p className="text-center text-green-700 font-medium">
+              WhatsApp conectado e pronto para uso!
+            </p>
+            <p className="text-center text-gray-500 text-sm mt-2">
+              Você pode fechar esta janela com segurança.
+            </p>
           </div>
         )}
       </CardContent>
