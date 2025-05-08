@@ -46,7 +46,14 @@ export async function checkConnectionState(instance: string): Promise<{ state: s
 /**
  * Connect an instance and get QR code
  */
-export async function connectInstance(instance: string): Promise<{ qr?: string }> {
+export interface ConnectInstanceResponse {
+  pairingCode: string | null;
+  code: string;
+  base64: string;
+  count: number;
+}
+
+export async function connectInstance(instance: string): Promise<ConnectInstanceResponse> {
   if (!instance) {
     throw new Error("Instance parameter is required");
   }

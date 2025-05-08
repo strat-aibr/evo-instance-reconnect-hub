@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { checkConnectionState, connectInstance } from '@/services/api';
+import { checkConnectionState, connectInstance, ConnectInstanceResponse } from '@/services/api';
 import StatusMessage from './StatusMessage';
 import QRCode from './QRCode';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,7 +13,8 @@ type ConnectionStatus = 'checking' | 'connected' | 'reconnecting' | 'error';
 
 const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
   const [status, setStatus] = useState<ConnectionStatus>('checking');
-  const [qrCode, setQrCode] = useState<string>('');
+  const [qrCodeData, setQrCodeData] = useState<string>('');
+  const [textCode, setTextCode] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   
   useEffect(() => {
@@ -33,8 +34,11 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
         setStatus('reconnecting');
         const connectionData = await connectInstance(instance);
         
-        if (connectionData.qr) {
-          setQrCode(connectionData.qr);
+        if (connectionData.base64) {
+          setQrCodeData(connectionData.base64);
+          if (connectionData.code) {
+            setTextCode(connectionData.code);
+          }
         } else {
           throw new Error("QR code not received from server");
         }
@@ -74,9 +78,9 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
         
         {renderStatusMessage()}
         
-        {status === 'reconnecting' && qrCode && (
+        {status === 'reconnecting' && qrCodeData && (
           <div className="mt-6">
-            <QRCode qrData={qrCode} />
+            <QRCode qrData={qrCodeData} textCode={textCode} />
           </div>
         )}
       </CardContent>
