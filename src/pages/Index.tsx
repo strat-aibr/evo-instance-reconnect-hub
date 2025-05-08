@@ -1,11 +1,51 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import React, { useEffect, useState } from 'react';
+import ReconnectionFlow from '@/components/ReconnectionFlow';
+import StatusMessage from '@/components/StatusMessage';
+import { Card, CardContent } from '@/components/ui/card';
 
 const Index = () => {
+  const [instance, setInstance] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    // Get the instance parameter from URL
+    const params = new URLSearchParams(window.location.search);
+    const instanceParam = params.get('instance');
+    setInstance(instanceParam);
+    setIsLoading(false);
+  }, []);
+
+  // Show loading state while checking URL parameters
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <StatusMessage type="loading" message="Carregando..." />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+      <div className="w-full max-w-md">
+        <h1 className="text-3xl font-bold text-center mb-6">Evolution API v2</h1>
+        
+        {!instance ? (
+          <Card>
+            <CardContent className="p-6">
+              <StatusMessage 
+                type="error" 
+                message="Instância não informada. Adicione o parâmetro '?instance=NOME_DA_INSTANCIA' na URL." 
+              />
+            </CardContent>
+          </Card>
+        ) : (
+          <ReconnectionFlow instance={instance} />
+        )}
+        
+        <footer className="mt-8 text-center text-sm text-gray-500">
+          &copy; {new Date().getFullYear()} Evolution API v2 - Reconexão de Instância
+        </footer>
       </div>
     </div>
   );
