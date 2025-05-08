@@ -128,8 +128,6 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
     <Card className="w-full max-w-md mx-auto">
       <CardContent className="p-6">
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-semibold mb-2">Reconexão de Instância</h2>
-          <p className="text-gray-600">Instância: {instance}</p>
         </div>
         
         {renderStatusMessage()}
