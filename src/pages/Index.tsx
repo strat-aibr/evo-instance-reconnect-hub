@@ -44,7 +44,7 @@ const Index = () => {
         )}
         
         <footer className="mt-8 text-center text-sm text-gray-500">
-          &copy; {new Date().getFullYear()} Evolution API v2 - Reconexão de Instância
+          &copy; {new Date().getFullYear()} Reconexão Whatsapp 
         </footer>
       </div>
     </div>
