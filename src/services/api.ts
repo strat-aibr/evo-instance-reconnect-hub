@@ -5,8 +5,8 @@
  * to avoid exposing API keys on the client side
  */
 
-const API_URL = import.meta.env.VITE_API_URL || "https://evolution.metricaas.com.br";
-const API_KEY = import.meta.env.VITE_API_KEY || "YmwZyRg27Hp1mWH7qd6xYlOnh4tfsRKC";
+const API_URL = import.meta.env.VITE_API_URL || "https://api.example.com";
+const API_KEY = import.meta.env.VITE_API_KEY || "";
 
 // For demonstration - in production, use a secure backend proxy
 // to avoid exposing API keys on the client side
