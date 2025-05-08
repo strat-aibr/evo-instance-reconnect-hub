@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { checkConnectionState, connectInstance, ConnectInstanceResponse } from '@/services/api';
 import StatusMessage from './StatusMessage';
 import QRCode from './QRCode';
@@ -16,37 +16,74 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
   const [qrCodeData, setQrCodeData] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   
+  const generateQrCode = useCallback(async () => {
+    try {
+      setStatus('reconnecting');
+      const connectionData = await connectInstance(instance);
+      
+      if (connectionData.base64) {
+        setQrCodeData(connectionData.base64);
+      } else {
+        throw new Error("QR code not received from server");
+      }
+    } catch (error) {
+      console.error("Connection error:", error);
+      setStatus('error');
+      setErrorMessage(error instanceof Error ? error.message : "Erro ao gerar QR Code");
+    }
+  }, [instance]);
+  
+  const checkConnection = useCallback(async () => {
+    try {
+      setStatus('checking');
+      
+      // Step 1: Check connection state
+      const stateData = await checkConnectionState(instance);
+      
+      if (stateData.state === 'open') {
+        setStatus('connected');
+        return true;
+      }
+      
+      // Step 2: If not connected, generate QR code
+      await generateQrCode();
+      return false;
+      
+    } catch (error) {
+      console.error("Connection flow error:", error);
+      setStatus('error');
+      setErrorMessage(error instanceof Error ? error.message : "Erro desconhecido na conexão");
+      return false;
+    }
+  }, [instance, generateQrCode]);
+  
+  // Initial check on component mount
   useEffect(() => {
-    const connectFlow = async () => {
-      try {
-        setStatus('checking');
-        
-        // Step 1: Check connection state
-        const stateData = await checkConnectionState(instance);
-        
-        if (stateData.state === 'open') {
-          setStatus('connected');
-          return;
-        }
-        
-        // Step 2: If not connected, try to connect
-        setStatus('reconnecting');
-        const connectionData = await connectInstance(instance);
-        
-        if (connectionData.base64) {
-          setQrCodeData(connectionData.base64);
-        } else {
-          throw new Error("QR code not received from server");
-        }
-      } catch (error) {
-        console.error("Connection flow error:", error);
-        setStatus('error');
-        setErrorMessage(error instanceof Error ? error.message : "Erro desconhecido na conexão");
+    checkConnection();
+  }, [checkConnection]);
+  
+  // Auto refresh QR code every 30 seconds if in reconnecting state
+  useEffect(() => {
+    let intervalId: number | undefined;
+    
+    if (status === 'reconnecting') {
+      intervalId = window.setInterval(() => {
+        console.log('Auto refreshing QR code...');
+        generateQrCode();
+      }, 30000); // 30 seconds
+    }
+    
+    // Clear interval on component unmount or status change
+    return () => {
+      if (intervalId !== undefined) {
+        clearInterval(intervalId);
       }
     };
-    
-    connectFlow();
-  }, [instance]);
+  }, [status, generateQrCode]);
+  
+  const handleRefreshClick = () => {
+    generateQrCode();
+  };
   
   const renderStatusMessage = () => {
     switch (status) {
@@ -76,7 +113,7 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
         
         {status === 'reconnecting' && qrCodeData && (
           <div className="mt-6">
-            <QRCode qrData={qrCodeData} />
+            <QRCode qrData={qrCodeData} onRefresh={handleRefreshClick} />
           </div>
         )}
       </CardContent>

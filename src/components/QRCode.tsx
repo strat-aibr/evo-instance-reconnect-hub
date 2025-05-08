@@ -1,11 +1,14 @@
 
 import React from 'react';
+import { Button } from '@/components/ui/button';
+import { RefreshCw } from 'lucide-react';
 
 interface QRCodeProps {
   qrData: string;
+  onRefresh: () => void;
 }
 
-const QRCode: React.FC<QRCodeProps> = ({ qrData }) => {
+const QRCode: React.FC<QRCodeProps> = ({ qrData, onRefresh }) => {
   // Safety check to ensure qrData is actually valid base64
   const isValidBase64 = () => {
     try {
@@ -32,6 +35,14 @@ const QRCode: React.FC<QRCodeProps> = ({ qrData }) => {
           className="w-64 h-64"
         />
       </div>
+      
+      <Button 
+        onClick={onRefresh}
+        className="mt-4 bg-green-500 hover:bg-green-600"
+      >
+        <RefreshCw className="mr-2" size={18} />
+        Gerar novo QR Code
+      </Button>
       
       <p className="text-center mt-4 text-gray-700 max-w-md">
         Abra o WhatsApp no seu celular e escaneie o QR Code acima para reconectar sua instância.
