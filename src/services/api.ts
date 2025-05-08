@@ -5,6 +5,8 @@
  * to avoid exposing API keys on the client side
  */
 
+// For production, these values should be provided by a secure backend
+// Never expose API keys directly in the frontend code
 const API_URL = import.meta.env.VITE_API_URL || "https://evolution.metricaas.com.br";
 const API_KEY = import.meta.env.VITE_API_KEY || "YmwZyRg27Hp1mWH7qd6xYlOnh4tfsRKC";
 
@@ -26,26 +28,47 @@ export interface ConnectionStateResponse {
 }
 
 export async function checkConnectionState(instance: string): Promise<ConnectionStateResponse> {
-  if (!instance) {
-    throw new Error("Instance parameter is required");
+  if (!instance || instance.trim() === '') {
+    throw new Error("Parâmetro de instância não informado ou inválido");
   }
   
   // Sanitize the instance parameter to prevent injection
   const sanitizedInstance = encodeURIComponent(instance.trim());
   
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+    
     const response = await fetch(`${API_URL}/instance/connectionState/${sanitizedInstance}`, {
       method: "GET",
       headers,
+      signal: controller.signal
     });
 
+    clearTimeout(timeoutId);
+    
     if (!response.ok) {
-      throw new Error(`Error checking connection state: ${response.status}`);
+      if (response.status === 404) {
+        throw new Error("Instância não encontrada");
+      } else if (response.status === 401 || response.status === 403) {
+        throw new Error("Acesso não autorizado à API");
+      } else {
+        throw new Error(`Erro ao verificar estado da conexão: ${response.status}`);
+      }
     }
 
-    return await response.json();
+    const data = await response.json();
+    
+    if (!data || !data.instance) {
+      throw new Error("Resposta inválida da API");
+    }
+    
+    return data;
   } catch (error) {
     console.error("Error checking connection state:", error);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error("Tempo limite excedido ao verificar estado da conexão");
+    }
     throw error;
   }
 }
@@ -54,33 +77,55 @@ export async function checkConnectionState(instance: string): Promise<Connection
  * Connect an instance and get QR code
  */
 export interface ConnectInstanceResponse {
-  pairingCode: string | null;
-  code: string;
-  base64: string;
-  count: number;
+  pairingCode?: string;
+  code?: string;
+  qr?: string; // Primary field from API
+  base64?: string; // Fallback field
+  count?: number;
 }
 
 export async function connectInstance(instance: string): Promise<ConnectInstanceResponse> {
-  if (!instance) {
-    throw new Error("Instance parameter is required");
+  if (!instance || instance.trim() === '') {
+    throw new Error("Parâmetro de instância não informado ou inválido");
   }
   
   // Sanitize the instance parameter to prevent injection
   const sanitizedInstance = encodeURIComponent(instance.trim());
   
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
+    
     const response = await fetch(`${API_URL}/instance/connect/${sanitizedInstance}`, {
       method: "GET",
       headers,
+      signal: controller.signal
     });
 
+    clearTimeout(timeoutId);
+    
     if (!response.ok) {
-      throw new Error(`Error connecting instance: ${response.status}`);
+      if (response.status === 404) {
+        throw new Error("Instância não encontrada");
+      } else if (response.status === 401 || response.status === 403) {
+        throw new Error("Acesso não autorizado à API");
+      } else {
+        throw new Error(`Erro ao conectar instância: ${response.status}`);
+      }
     }
 
-    return await response.json();
+    const data = await response.json();
+    
+    if (!data || (!data.qr && !data.base64)) {
+      throw new Error("QR code não recebido do servidor");
+    }
+    
+    return data;
   } catch (error) {
     console.error("Error connecting instance:", error);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error("Tempo limite excedido ao conectar instância");
+    }
     throw error;
   }
 }
