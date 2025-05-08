@@ -53,16 +53,12 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
         setStatus('connected');
         return true;
       } else if (stateData.instance && (stateData.instance.state === 'close' || stateData.instance.state === 'connecting')) {
-        // If state is close or connecting, generate QR code
-        if (status !== 'reconnecting') {
-          await generateQrCode();
-        }
+        // If state is close or connecting, immediately generate QR code
+        await generateQrCode();
       } else {
         // Unknown state
         console.warn("Unknown connection state:", stateData);
-        if (status !== 'reconnecting') {
-          await generateQrCode();
-        }
+        await generateQrCode();
       }
       return false;
       
@@ -119,7 +115,7 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
       case 'connected':
         return <StatusMessage type="success" message="Instância conectada com sucesso." />;
       case 'reconnecting':
-        return <StatusMessage type="loading" message="Reconectando... gerando QR Code" />;
+        return <StatusMessage type="loading" message="Reconectando... escaneie o QR Code" />;
       case 'error':
         return <StatusMessage 
                  type="error" 
