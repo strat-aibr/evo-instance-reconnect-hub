@@ -18,7 +18,14 @@ const headers = {
 /**
  * Check the connection state of an instance
  */
-export async function checkConnectionState(instance: string): Promise<{ state: string }> {
+export interface ConnectionStateResponse {
+  instance: {
+    instanceName: string;
+    state: 'open' | 'close' | 'connecting';
+  };
+}
+
+export async function checkConnectionState(instance: string): Promise<ConnectionStateResponse> {
   if (!instance) {
     throw new Error("Instance parameter is required");
   }

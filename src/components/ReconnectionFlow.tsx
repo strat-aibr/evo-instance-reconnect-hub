@@ -16,7 +16,6 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
   const [status, setStatus] = useState<ConnectionStatus>('checking');
   const [qrCodeData, setQrCodeData] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const [lastCheckTime, setLastCheckTime] = useState<Date>(new Date());
   
   const generateQrCode = useCallback(async () => {
     try {
@@ -43,9 +42,9 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
       
       // Step 1: Check connection state
       const stateData = await checkConnectionState(instance);
-      setLastCheckTime(new Date());
       
-      if (stateData.state === 'open') {
+      // Check the state from the response
+      if (stateData.instance && stateData.instance.state === 'open') {
         if (status !== 'connected') {
           setStatus('connected');
           toast.success("Instância conectada com sucesso!");
@@ -53,11 +52,17 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
         }
         setStatus('connected');
         return true;
-      }
-      
-      // Step 2: If not connected and we were previously in checking status, generate QR code
-      if (status === 'checking') {
-        await generateQrCode();
+      } else if (stateData.instance && (stateData.instance.state === 'close' || stateData.instance.state === 'connecting')) {
+        // If state is close or connecting, generate QR code
+        if (status !== 'reconnecting') {
+          await generateQrCode();
+        }
+      } else {
+        // Unknown state
+        console.warn("Unknown connection state:", stateData);
+        if (status !== 'reconnecting') {
+          await generateQrCode();
+        }
       }
       return false;
       
@@ -122,10 +127,6 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
                />;
     }
   };
-
-  const formatLastCheckTime = (date: Date) => {
-    return date.toLocaleTimeString();
-  };
   
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -133,9 +134,6 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
         <div className="text-center mb-6">
           <h2 className="text-2xl font-semibold mb-2">Reconexão de Instância</h2>
           <p className="text-gray-600">Instância: {instance}</p>
-          <p className="text-xs text-gray-400 mt-1">
-            Última verificação: {formatLastCheckTime(lastCheckTime)}
-          </p>
         </div>
         
         {renderStatusMessage()}
