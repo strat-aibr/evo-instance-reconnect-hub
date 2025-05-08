@@ -19,7 +19,6 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
   const [reconnectAttempts, setReconnectAttempts] = useState<number>(0);
   const isChecking = useRef<boolean>(false);
   const timeoutRef = useRef<number | null>(null);
-  const MAX_RECONNECT_ATTEMPTS = 10;
   
   const generateQrCode = useCallback(async () => {
     try {
@@ -77,28 +76,24 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
         } else {
           setStatus('connected');
         }
-        // Reset reconnect attempts when connected
-        setReconnectAttempts(0);
         isChecking.current = false;
         return true;
       } else if (stateData.instance && 
                 (stateData.instance.state === 'close' || 
                  stateData.instance.state === 'connecting')) {
         
-        // Check if we've reached the maximum reconnect attempts
-        if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-          setStatus('error');
-          setErrorMessage(`Falha após ${MAX_RECONNECT_ATTEMPTS} tentativas de reconexão. Tente novamente mais tarde.`);
-          isChecking.current = false;
-          return false;
+        // Generate QR code if it's not already present or force update every 30 seconds
+        if (!qrCodeData || reconnectAttempts % 6 === 0) { // Update QR every ~30 seconds (6 * 5s polling)
+          await generateQrCode();
         }
-        
-        // If state is close or connecting, generate QR code
-        await generateQrCode();
       } else {
         // Unknown state
         console.warn("Unknown connection state:", stateData);
-        await generateQrCode();
+        
+        // If we don't have a QR code yet, try to generate one
+        if (!qrCodeData) {
+          await generateQrCode();
+        }
       }
       
       isChecking.current = false;
@@ -115,7 +110,7 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
       isChecking.current = false;
       return false;
     }
-  }, [instance, generateQrCode, status, reconnectAttempts]);
+  }, [instance, generateQrCode, status, qrCodeData, reconnectAttempts]);
   
   // Setup polling with setTimeout
   const setupPolling = useCallback(() => {
@@ -123,8 +118,8 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
       window.clearTimeout(timeoutRef.current);
     }
     
-    // Only continue polling if not in error state and under max attempts
-    if (status !== 'error' && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+    // Continue polling regardless of attempts count
+    if (status !== 'error') {
       timeoutRef.current = window.setTimeout(async () => {
         console.log('Checking connection status...');
         await checkConnection();
@@ -132,7 +127,7 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
         setupPolling();
       }, 5000); // 5 seconds
     }
-  }, [checkConnection, status, reconnectAttempts]);
+  }, [checkConnection, status]);
   
   // Initial check on component mount
   useEffect(() => {
@@ -155,8 +150,6 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
   }, [checkConnection, setupPolling, instance]);
   
   const handleRefreshClick = () => {
-    // Reset reconnect attempts when manually refreshing
-    setReconnectAttempts(0);
     generateQrCode();
   };
   
@@ -167,7 +160,7 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
       case 'connected':
         return <StatusMessage type="success" message="Instância conectada com sucesso." />;
       case 'reconnecting':
-        return <StatusMessage type="loading" message={`Reconectando (tentativa ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})... escaneie o QR Code`} />;
+        return <StatusMessage type="loading" message={`Reconectando (tentativa ${reconnectAttempts})... escaneie o QR Code`} />;
       case 'error':
         return <StatusMessage 
                  type="error" 
@@ -184,7 +177,7 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
         
         {renderStatusMessage()}
         
-        {status === 'reconnecting' && qrCodeData && (
+        {status !== 'connected' && qrCodeData && (
           <div className="mt-6">
             <QRCode qrData={qrCodeData} onRefresh={handleRefreshClick} />
           </div>
