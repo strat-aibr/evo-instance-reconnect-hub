@@ -37,7 +37,14 @@ npm run dev
    - `EVOLUTION_API_KEY`: Your Evolution API key
    - `PORT`: 3000 (or your preferred port)
 
-4. Ensure HTTPS is enabled for production security.
+4. Add the following to your package.json if not already present:
+   ```json
+   "scripts": {
+     "start": "node server.js"
+   }
+   ```
+
+5. Ensure HTTPS is enabled for production security.
 
 ### Manual Deployment
 
