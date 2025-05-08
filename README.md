@@ -1,73 +1,75 @@
-# Welcome to your Lovable project
 
-## Project info
+# WhatsApp Instance Reconnection App
 
-**URL**: https://lovable.dev/projects/6573427a-9cf7-4147-8a79-84f697709fc4
+Secure application for reconnecting WhatsApp instances through the Evolution API.
 
-## How can I edit this code?
+## Setup
 
-There are several ways of editing your application.
+1. Create a `.env` file based on `.env.example`:
+```
+cp .env.example .env
+```
 
-**Use Lovable**
+2. Edit the `.env` file and add your Evolution API URL and key:
+```
+EVOLUTION_API_URL=https://yourevolutionapi.example.com
+EVOLUTION_API_KEY=your_api_key_here
+PORT=3000
+```
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/6573427a-9cf7-4147-8a79-84f697709fc4) and start prompting.
+## Development
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Production Deployment with Easypanel
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Using Docker
 
-**Use GitHub Codespaces**
+1. Make sure Docker is installed on your Easypanel server.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+2. Deploy using the Dockerfile in this repository.
 
-## What technologies are used for this project?
+3. Set environment variables in Easypanel:
+   - `EVOLUTION_API_URL`: Your Evolution API URL
+   - `EVOLUTION_API_KEY`: Your Evolution API key
+   - `PORT`: 3000 (or your preferred port)
 
-This project is built with:
+4. Ensure HTTPS is enabled for production security.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Manual Deployment
 
-## How can I deploy this project?
+1. Clone this repository to your server.
 
-Simply open [Lovable](https://lovable.dev/projects/6573427a-9cf7-4147-8a79-84f697709fc4) and click on Share -> Publish.
+2. Install dependencies:
+```
+npm install
+```
 
-## Can I connect a custom domain to my Lovable project?
+3. Build the frontend:
+```
+npm run build
+```
 
-Yes, you can!
+4. Create a `.env` file with your configuration.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+5. Start the server:
+```
+node server.js
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+6. For production, use a process manager like PM2:
+```
+npm install -g pm2
+pm2 start server.js --name whatsapp-reconnect
+```
+
+## Security Features
+
+- API key stored in environment variables, not in frontend code
+- Backend proxy to prevent direct access to Evolution API
+- Input validation to prevent injection attacks
+- Security headers to enhance application security
+- HTTPS recommended for all production deployments

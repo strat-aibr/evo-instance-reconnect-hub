@@ -1,21 +1,8 @@
 
 /**
  * API service for Evolution API
- * Important: This should be used with a backend proxy in production
- * to avoid exposing API keys on the client side
+ * This service connects to our secure proxy endpoints
  */
-
-// For production, these values should be provided by a secure backend
-// Never expose API keys directly in the frontend code
-const API_URL = import.meta.env.VITE_API_URL || "https://api.example.com";
-const API_KEY = import.meta.env.VITE_API_KEY || "";
-
-// For demonstration - in production, use a secure backend proxy
-// to avoid exposing API keys on the client side
-const headers = {
-  "Content-Type": "application/json",
-  "apikey": API_KEY
-};
 
 /**
  * Check the connection state of an instance
@@ -39,9 +26,8 @@ export async function checkConnectionState(instance: string): Promise<Connection
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
     
-    const response = await fetch(`${API_URL}/instance/connectionState/${sanitizedInstance}`, {
+    const response = await fetch(`/api/connectionState?instance=${sanitizedInstance}`, {
       method: "GET",
-      headers,
       signal: controller.signal
     });
 
@@ -96,9 +82,8 @@ export async function connectInstance(instance: string): Promise<ConnectInstance
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
     
-    const response = await fetch(`${API_URL}/instance/connect/${sanitizedInstance}`, {
+    const response = await fetch(`/api/connect?instance=${sanitizedInstance}`, {
       method: "GET",
-      headers,
       signal: controller.signal
     });
 
