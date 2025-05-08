@@ -14,7 +14,6 @@ type ConnectionStatus = 'checking' | 'connected' | 'reconnecting' | 'error';
 const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
   const [status, setStatus] = useState<ConnectionStatus>('checking');
   const [qrCodeData, setQrCodeData] = useState<string>('');
-  const [textCode, setTextCode] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   
   useEffect(() => {
@@ -36,9 +35,6 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
         
         if (connectionData.base64) {
           setQrCodeData(connectionData.base64);
-          if (connectionData.code) {
-            setTextCode(connectionData.code);
-          }
         } else {
           throw new Error("QR code not received from server");
         }
@@ -80,7 +76,7 @@ const ReconnectionFlow: React.FC<ReconnectionFlowProps> = ({ instance }) => {
         
         {status === 'reconnecting' && qrCodeData && (
           <div className="mt-6">
-            <QRCode qrData={qrCodeData} textCode={textCode} />
+            <QRCode qrData={qrCodeData} />
           </div>
         )}
       </CardContent>
