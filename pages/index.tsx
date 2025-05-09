@@ -1,0 +1,72 @@
+
+import React, { useEffect, useState } from 'react';
+import ReconnectionFlow from '@/components/ReconnectionFlow';
+import StatusMessage from '@/components/StatusMessage';
+import { Card, CardContent } from '@/components/ui/card';
+import Head from 'next/head';
+
+const Index = () => {
+  const [instance, setInstance] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isValidInstance, setIsValidInstance] = useState<boolean>(true);
+
+  useEffect(() => {
+    // Get the instance parameter from URL
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const instanceParam = params.get('instance');
+      
+      // Validate the instance parameter
+      if (!instanceParam || instanceParam.trim() === '') {
+        setIsValidInstance(false);
+      } else {
+        setInstance(instanceParam);
+      }
+      
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Show loading state while checking URL parameters
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <StatusMessage type="loading" message="Carregando..." />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <Head>
+        <title>Reconectar WhatsApp</title>
+        <meta name="description" content="Reconectar instância de WhatsApp" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </Head>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+        <div className="w-full max-w-md">
+          <h1 className="text-3xl font-bold text-center mb-6">Reconectar Whatsapp</h1>
+          
+          {!isValidInstance ? (
+            <Card>
+              <CardContent className="p-6">
+                <StatusMessage 
+                  type="error" 
+                  message="Instância não informada ou inválida. Adicione o parâmetro '?instance=NOME_DA_INSTANCIA' na URL." 
+                />
+              </CardContent>
+            </Card>
+          ) : instance ? (
+            <ReconnectionFlow instance={instance} />
+          ) : null}
+          
+          <footer className="mt-8 text-center text-sm text-gray-500">
+            &copy; {new Date().getFullYear()} Reconexão Whatsapp 
+          </footer>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default Index;

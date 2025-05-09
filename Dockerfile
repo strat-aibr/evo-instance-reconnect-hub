@@ -13,11 +13,11 @@ RUN npm ci
 # Copy app source
 COPY . .
 
-# Build the frontend
+# Build the Next.js app
 RUN npm run build
 
 # Expose the server port
 EXPOSE 3000
 
 # Start the server
-CMD ["node", "server.js"]
+CMD ["npm", "start"]
