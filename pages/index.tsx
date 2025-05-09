@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
-import ReconnectionFlow from '@/components/ReconnectionFlow';
-import StatusMessage from '@/components/StatusMessage';
+import ReconnectionFlow from '@/src/components/ReconnectionFlow';
+import StatusMessage from '@/src/components/StatusMessage';
 import { Card, CardContent } from '@/components/ui/card';
 import Head from 'next/head';
 
