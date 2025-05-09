@@ -41,5 +41,11 @@ Thumbs.db
 .tailwind
 .tailwind-cache
 
+node_modules/
+.next/
+out/
+.env.local
+.DS_Store
+
 # Optional: Build analyzer output
 analyze/
