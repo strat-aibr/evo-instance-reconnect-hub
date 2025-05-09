@@ -1,116 +1,45 @@
 
-/**
- * API service for Evolution API
- * This service connects to our secure proxy endpoints
- */
+import axios from 'axios';
 
-/**
- * Check the connection state of an instance
- */
+// Types for the API responses
 export interface ConnectionStateResponse {
-  instance: {
-    instanceName: string;
-    state: 'open' | 'close' | 'connecting';
+  instance?: {
+    state: string;
+    [key: string]: any;
   };
+  error?: string;
 }
 
-export async function checkConnectionState(instance: string): Promise<ConnectionStateResponse> {
-  if (!instance || instance.trim() === '') {
-    throw new Error("Parâmetro de instância não informado ou inválido");
-  }
-  
-  // Sanitize the instance parameter to prevent injection
-  const sanitizedInstance = encodeURIComponent(instance.trim());
-  
+export interface ConnectResponse {
+  qr?: string;
+  base64?: string;
+  error?: string;
+}
+
+// Function to check the connection state of an instance
+export const checkConnectionState = async (instance: string): Promise<ConnectionStateResponse> => {
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
-    
-    const response = await fetch(`/api/connectionState?instance=${sanitizedInstance}`, {
-      method: "GET",
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error("Instância não encontrada");
-      } else if (response.status === 401 || response.status === 403) {
-        throw new Error("Acesso não autorizado à API");
-      } else {
-        throw new Error(`Erro ao verificar estado da conexão: ${response.status}`);
-      }
-    }
-
-    const data = await response.json();
-    
-    if (!data || !data.instance) {
-      throw new Error("Resposta inválida da API");
-    }
-    
-    return data;
+    const response = await axios.get(`/api/connectionState?instance=${encodeURIComponent(instance)}`);
+    return response.data;
   } catch (error) {
-    console.error("Error checking connection state:", error);
-    if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error("Tempo limite excedido ao verificar estado da conexão");
+    console.error('Error checking connection state:', error);
+    if (axios.isAxiosError(error) && error.response) {
+      return error.response.data;
     }
-    throw error;
+    return { error: 'Failed to check connection state' };
   }
-}
+};
 
-/**
- * Connect an instance and get QR code
- */
-export interface ConnectInstanceResponse {
-  pairingCode?: string;
-  code?: string;
-  qr?: string; // Primary field from API
-  base64?: string; // Fallback field
-  count?: number;
-}
-
-export async function connectInstance(instance: string): Promise<ConnectInstanceResponse> {
-  if (!instance || instance.trim() === '') {
-    throw new Error("Parâmetro de instância não informado ou inválido");
-  }
-  
-  // Sanitize the instance parameter to prevent injection
-  const sanitizedInstance = encodeURIComponent(instance.trim());
-  
+// Function to connect to an instance
+export const connectInstance = async (instance: string): Promise<ConnectResponse> => {
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
-    
-    const response = await fetch(`/api/connect?instance=${sanitizedInstance}`, {
-      method: "GET",
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error("Instância não encontrada");
-      } else if (response.status === 401 || response.status === 403) {
-        throw new Error("Acesso não autorizado à API");
-      } else {
-        throw new Error(`Erro ao conectar instância: ${response.status}`);
-      }
-    }
-
-    const data = await response.json();
-    
-    if (!data || (!data.qr && !data.base64)) {
-      throw new Error("QR code não recebido do servidor");
-    }
-    
-    return data;
+    const response = await axios.get(`/api/connect?instance=${encodeURIComponent(instance)}`);
+    return response.data;
   } catch (error) {
-    console.error("Error connecting instance:", error);
-    if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error("Tempo limite excedido ao conectar instância");
+    console.error('Error connecting to instance:', error);
+    if (axios.isAxiosError(error) && error.response) {
+      return error.response.data;
     }
-    throw error;
+    throw new Error('Failed to connect to instance');
   }
-}
+};
