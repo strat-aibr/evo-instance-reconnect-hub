@@ -39,6 +39,7 @@ const QRCode: React.FC<QRCodeProps> = ({ qrData, onRefresh }) => {
       <Button 
         onClick={onRefresh}
         className="mt-4 bg-green-500 hover:bg-green-600"
+        variant="default"
       >
         <RefreshCw className="mr-2" size={18} />
         Gerar novo QR Code
