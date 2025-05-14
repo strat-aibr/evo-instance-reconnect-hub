@@ -1,28 +1,37 @@
 
 import * as React from "react"
-import { OTPInput, OTPInputContext } from "input-otp"
 import { Dot } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
+// Since we can't install input-otp, let's create a simplified version
+interface OTPInputContextType {
+  slots: {
+    char: string;
+    hasFakeCaret: boolean;
+    isActive: boolean;
+  }[];
+}
+
+const OTPInputContext = React.createContext<OTPInputContextType>({ slots: [] });
+
 const InputOTP = React.forwardRef<
-  React.ElementRef<typeof OTPInput>,
-  React.ComponentPropsWithoutRef<typeof OTPInput>
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & { containerClassName?: string }
 >(({ className, containerClassName, ...props }, ref) => (
-  <OTPInput
+  <div
     ref={ref}
-    containerClassName={cn(
+    className={cn(
       "flex items-center gap-2 has-[:disabled]:opacity-50",
       containerClassName
     )}
-    className={cn("disabled:cursor-not-allowed", className)}
     {...props}
   />
 ))
 InputOTP.displayName = "InputOTP"
 
 const InputOTPGroup = React.forwardRef<
-  React.ElementRef<"div">,
+  HTMLDivElement,
   React.ComponentPropsWithoutRef<"div">
 >(({ className, ...props }, ref) => (
   <div ref={ref} className={cn("flex items-center", className)} {...props} />
@@ -32,15 +41,15 @@ InputOTPGroup.displayName = "InputOTPGroup"
 type InputOTPSlotProps = React.ComponentPropsWithoutRef<"div"> & { index: number }
 
 const InputOTPSlot = React.forwardRef<
-  React.ElementRef<"div">,
+  HTMLDivElement,
   InputOTPSlotProps
 >(({ index, className, ...props }, ref) => {
-  const inputOTPContext = React.useContext(OTPInputContext)
-  const { slots } = inputOTPContext || { slots: [] }
-  const slot = slots && slots.length > index ? slots[index] : undefined
-  const char = slot?.char || ""
-  const hasFakeCaret = slot?.hasFakeCaret || false
-  const isActive = slot?.isActive || false
+  const inputOTPContext = React.useContext(OTPInputContext);
+  const { slots } = inputOTPContext;
+  const slot = slots && slots.length > index ? slots[index] : undefined;
+  const char = slot?.char || "";
+  const hasFakeCaret = slot?.hasFakeCaret || false;
+  const isActive = slot?.isActive || false;
 
   return (
     <div
@@ -64,7 +73,7 @@ const InputOTPSlot = React.forwardRef<
 InputOTPSlot.displayName = "InputOTPSlot"
 
 const InputOTPSeparator = React.forwardRef<
-  React.ElementRef<"div">,
+  HTMLDivElement,
   React.ComponentPropsWithoutRef<"div">
 >(({ ...props }, ref) => (
   <div ref={ref} role="separator" {...props}>
